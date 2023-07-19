@@ -1,6 +1,5 @@
 <?php
-// include('../login_redirect.php');
-// include('../menu.php');
+include('../login_redirect.php');
 
 // Enable PHP debugging
 ini_set('display_errors', 1);
