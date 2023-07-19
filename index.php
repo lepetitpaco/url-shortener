@@ -1,5 +1,6 @@
 <?php
-include('../login_redirect.php');
+// include('../login_redirect.php');
+// include('../menu.php');
 
 // Enable PHP debugging
 ini_set('display_errors', 1);
@@ -42,27 +43,32 @@ function generateShortCode($length = 6)
 
 // Process the form submission or URL creation request
 if (isset($_POST['url'])) {
-    // Assuming you have a form with a "url" input field
-    $originalUrl = $_POST['url'];
+    $originalUrl = filter_input(INPUT_POST, 'url', FILTER_SANITIZE_URL);
 
-    // Generate a unique short code
-    $shortCode = generateShortCode();
-
-    // Store the original URL and short code in the database
-    $query = "INSERT INTO short_urls (original_url, short_code) VALUES ('$originalUrl', '$shortCode')";
-    $result = mysqli_query($connection, $query);
-
-    if ($result) {
-        // URL stored successfully
-        $shortUrl = 'https://toolbox.lepetitpaco.com/tiny/' . $shortCode;
+    // Check if the URL is valid
+    if (!filter_var($originalUrl, FILTER_VALIDATE_URL)) {
+        // Handle invalid URL error
+        // Display an error message
+        $errorMessage = "Invalid URL.";
     } else {
-        // Error handling
-        echo "Error creating short URL.";
+        // Generate a unique short code
+        $shortCode = generateShortCode();
+
+        // Store the original URL and short code in the database
+        $query = "INSERT INTO short_urls (original_url, short_code) VALUES ('$originalUrl', '$shortCode')";
+        $result = mysqli_query($connection, $query);
+
+        if ($result) {
+            // URL stored successfully
+            $shortUrl = 'https://toolbox.lepetitpaco.com/tiny/' . $shortCode;
+        } else {
+            // Error handling
+            echo "Error creating short URL.";
+        }
     }
 }
 
 if (basename($_SERVER['PHP_SELF']) !== 'index.php') {
-
     $shortCode = explode('/', $_SERVER['REQUEST_URI'])[2];
     $query = "SELECT original_url FROM short_urls WHERE short_code = '$shortCode'";
     $result = mysqli_query($connection, $query);
@@ -75,10 +81,7 @@ if (basename($_SERVER['PHP_SELF']) !== 'index.php') {
 }
 // Close the database connection
 mysqli_close($connection);
-
 ?>
-
-
 
 <!DOCTYPE html>
 <html>
@@ -181,6 +184,11 @@ mysqli_close($connection);
                         <label for="url" class="text-light">URL:</label>
                         <input type="text" name="url" id="url" class="form-control" required>
                     </div>
+                    <?php if (isset($errorMessage)): ?>
+                        <div class="alert alert-danger" role="alert">
+                            <?php echo $errorMessage; ?>
+                        </div>
+                    <?php endif; ?>
                     <button type="submit" class="btn btn-primary btn-block">Create Short URL</button>
                 </form>
             </div>
